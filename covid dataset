@@ -1,0 +1,51 @@
+import requests
+import pandas as pd
+
+def fetch_covid_data():
+    url = 'https://api.covid19api.com/summary'  # Example API URL (you can use other APIs as well)
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        return data
+    else:
+        return None
+
+def create_covid_dataset():
+    data = fetch_covid_data()
+    if data is None:
+        print('Failed to fetch COVID-19 data')
+        return
+
+    # Extract relevant data from the API response
+    countries = []
+    total_cases = []
+    total_deaths = []
+    total_recovered = []
+
+    global_data = data['Global']
+    global_cases = global_data['TotalConfirmed']
+    global_deaths = global_data['TotalDeaths']
+    global_recovered = global_data['TotalRecovered']
+
+    for country_data in data['Countries']:
+        countries.append(country_data['Country'])
+        total_cases.append(country_data['TotalConfirmed'])
+        total_deaths.append(country_data['TotalDeaths'])
+        total_recovered.append(country_data['TotalRecovered'])
+
+    # Create a DataFrame with the extracted data
+    covid_df = pd.DataFrame({
+        'Country': countries,
+        'TotalCases': total_cases,
+        'TotalDeaths': total_deaths,
+        'TotalRecovered': total_recovered
+    })
+
+    # Add a row for global data
+    covid_df.loc[len(covid_df)] = ['Global', global_cases, global_deaths, global_recovered]
+
+    return covid_df
+
+# Usage
+covid_dataset = create_covid_dataset()
+print(covid_dataset.head())
